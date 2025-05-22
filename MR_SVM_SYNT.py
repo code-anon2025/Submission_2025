@@ -115,7 +115,7 @@ def checkSV(incompleteExample, repairedOtherExamples, labels, y_incompleteExampl
 
     return False, repaired_example, new_fitted_flag
 
-def checkImputationNecessity(possible_repaired_dataset, original_dataset, labels, example_index, seed=None,
+def checkRepairNecessity(possible_repaired_dataset, original_dataset, labels, example_index, seed=None,
                              model_instance=None,
                              fitted_flag=None):
     possible_repaired_data_subset = np.delete(possible_repaired_dataset, example_index, axis=0)
@@ -131,9 +131,9 @@ def checkImputationNecessity(possible_repaired_dataset, original_dataset, labels
     return is_sv_result, repaired_example_result, updated_fitted_flag
 
 
-def findminimalImputation(original_dataset, labels, seed=None):
-    minimal_imputation = []
-    minimal_imputation_examples = []
+def findminimalRepair(original_dataset, labels, seed=None):
+    minimal_Repair = []
+    minimal_Repair_examples = []
     index_and_edge_repair = {}
 
     model = SGDClassifier(loss='hinge', max_iter=10000, tol=1e-3, random_state=seed, warm_start=True)
@@ -155,7 +155,7 @@ def findminimalImputation(original_dataset, labels, seed=None):
 
             try:
                 is_support_vector, repair_for_this_example, model_has_been_fully_fitted = \
-                    checkImputationNecessity(repaired_dataset, original_dataset, labels, index, seed,
+                    checkRepairNecessity(repaired_dataset, original_dataset, labels, index, seed,
                                              model_instance=model,
                                              fitted_flag=model_has_been_fully_fitted)
             except ValueError as e:
@@ -164,10 +164,10 @@ def findminimalImputation(original_dataset, labels, seed=None):
             index_and_edge_repair[index] = repair_for_this_example
 
             if is_support_vector:
-                minimal_imputation.append([list(repair_for_this_example), index])
-                minimal_imputation_examples.append(index)
+                minimal_Repair.append([list(repair_for_this_example), index])
+                minimal_Repair_examples.append(index)
 
-    return minimal_imputation, minimal_imputation_examples, index_and_edge_repair
+    return minimal_Repair, minimal_Repair_examples, index_and_edge_repair
 
 def get_Xy(data, label=None):
     if label== None:
@@ -180,7 +180,7 @@ def get_Xy(data, label=None):
     return np.array(X), np.array(y)
 
 
-#----------------------------------------------------Imputation Method---------------------------------------------------
+#----------------------------------------------------Repair Method---------------------------------------------------
 
 def mice_impute(X_train, max_iter=2, random_state=51, condition="Fit", imputer=None):
     if condition == "Fit":
@@ -207,7 +207,7 @@ def mice_impute(X_train, max_iter=2, random_state=51, condition="Fit", imputer=N
         inference_time = end_fit-start_fit
         return missing_X_train, inference_time 
 
-def mean_imputation(X_train, condition="Fit", imputer=None):
+def mean_Repair(X_train, condition="Fit", imputer=None):
     if condition == "Fit":
         complete_X_train = X_train.copy()
         imputer = SimpleImputer()
@@ -231,7 +231,7 @@ def mean_imputation(X_train, condition="Fit", imputer=None):
         return missing_X_train, inference_time 
 
 
-def knn_imputation(X_train, condition="Fit", imputer=None, neighbors=5):
+def knn_Repair(X_train, condition="Fit", imputer=None, neighbors=5):
     if condition == "Fit":
         complete_X_train = X_train.copy()
 
@@ -482,9 +482,9 @@ def active_clean_driver(df_train, df_test):
 
 
 #----------------------------------------------------Utility Function---------------------------------------------------
-def sanity_check(X_check, minimal_imputation_examples_check): 
+def sanity_check(X_check, minimal_Repair_examples_check): 
     missing_rows = np.where(np.isnan(X_check).any(axis=1))[0]
-    examples_drop = [example for example in missing_rows if example not in minimal_imputation_examples_check]
+    examples_drop = [example for example in missing_rows if example not in minimal_Repair_examples_check]
     return len(examples_drop)
 
 def make_dirty(df_md, random_seed_md, missing_factor_md, dirty_cols=1): 
@@ -523,7 +523,7 @@ def make_dirty(df_md, random_seed_md, missing_factor_md, dirty_cols=1):
 #                                                                                           #
 #############################################################################################
 
-# Main execution block exactly as it was in the Canvas artifact "optimized_imputation_code_minimal_changes"
+# Main execution block exactly as it was in the Canvas artifact "optimized_Repair_code_minimal_changes"
 # WITH CORRECTION FOR 'name' vs 'name_main'
 if __name__ == '__main__':
     print("Run started at:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -544,13 +544,13 @@ if __name__ == '__main__':
         last_column_index = df.columns[-1] 
         df[last_column_index] = df[last_column_index].replace({'malware': 1, 'goodware': -1}).astype(int) 
     elif DATASET_CHOICE == "skin":
-        file_path = './Minimal-Imputation/Synthetic-Datasets/skin.txt' 
+        file_path = './Minimal-Repair/Synthetic-Datasets/skin.txt' 
         name = "skin" 
         col_num = 1   
         df = pd.read_csv(file_path, sep='\t', header=None) 
         df.iloc[:, -1] = df.iloc[:, -1].replace({1: 1, 2: -1}).astype(int) 
     elif DATASET_CHOICE == "malware":
-        data_file = './Minimal-Imputation/Synthetic-Datasets/REJAFADA.data' 
+        data_file = './Minimal-Repair/Synthetic-Datasets/REJAFADA.data' 
         name = "malware"  
         df = pd.read_csv(data_file) 
         df = df.drop(df.columns[0], axis=1)
@@ -653,8 +653,8 @@ if __name__ == '__main__':
         
         model_knn_main = None 
         if X_train_drop_knn.shape[0] > 0: 
-            model_knn_main, knn_fit_time_main = knn_imputation(X_train_drop_knn, condition="Fit") 
-            X_train_imputed_knn_main, knn_infer_time_main = knn_imputation(X_train_np.copy(), condition="Transform", imputer=model_knn_main) 
+            model_knn_main, knn_fit_time_main = knn_Repair(X_train_drop_knn, condition="Fit") 
+            X_train_imputed_knn_main, knn_infer_time_main = knn_Repair(X_train_np.copy(), condition="Transform", imputer=model_knn_main) 
             
             train_accuracies_knn_eval = [] 
             test_accuracies_knn_eval = []  
@@ -680,7 +680,7 @@ if __name__ == '__main__':
             print(f"Duration standard deviation: {np.std(durations_knn_eval):.4f}") 
             print(f"Total time using KNN-imputed data: {total_time_knn_main:.4f}")
         else:
-            print("KNN Imputation skipped: No fully complete rows in training data to fit imputer.")
+            print("KNN Repair skipped: No fully complete rows in training data to fit imputer.")
 
         model_mice_main = None 
         if name != "malware":
@@ -716,9 +716,9 @@ if __name__ == '__main__':
                 print(f"Duration standard deviation: {np.std(durations_mice_eval):.4f}")
                 print(f"Total time using MICE-imputed data: {total_time_mice_main:.4f}")
             else:
-                print("MICE Imputation skipped: No fully complete rows for fitting.")
+                print("MICE Repair skipped: No fully complete rows for fitting.")
         else: 
-             print("MICE Imputation skipped for 'malware' dataset.")
+             print("MICE Repair skipped for 'malware' dataset.")
 
         for seed_iter_loop in seeds_to_try: 
             print(f"--------------------------------------------- Seed: {seed_iter_loop} ------------------------------------------")
@@ -727,7 +727,7 @@ if __name__ == '__main__':
             
             iter_loop_start_time = time.time() 
             accuracy_time_total_iter = 0 
-            imputation_total_iter = 0    
+            Repair_total_iter = 0    
             missing_value_initial_iter = rows_with_missing_values 
 
             max_iter_loop = 10 
@@ -736,19 +736,19 @@ if __name__ == '__main__':
             if itter_method_loop == "GT": 
                 for i_loop in range(0,max_iter_loop): 
                     print(f"\n--- Iteration {i_loop+1}/{max_iter_loop} ---")
-                    minimal_imputation_res, imputation_required_indices_res, _ = findminimalImputation(
+                    minimal_Repair_res, Repair_required_indices_res, _ = findminimalRepair(
                         X_train_filled_iter, Y_train_filled_iter, seed=seed_iter_loop
                     ) 
-                    print("need to be imputed: ", len(imputation_required_indices_res))
-                    num_dropped_sanity = sanity_check(X_train_filled_iter, imputation_required_indices_res) 
+                    print("need to be imputed: ", len(Repair_required_indices_res))
+                    num_dropped_sanity = sanity_check(X_train_filled_iter, Repair_required_indices_res) 
                     print("number of example dropped: ", num_dropped_sanity)
 
-                    X_train_filled_iter[imputation_required_indices_res] = X_train_OG_np[imputation_required_indices_res] # Use X_train_OG_np
+                    X_train_filled_iter[Repair_required_indices_res] = X_train_OG_np[Repair_required_indices_res] # Use X_train_OG_np
                 
                     current_number_missing_iter = np.isnan(X_train_filled_iter).any(axis=1).sum() 
-                    imputation_total_iter += len(imputation_required_indices_res)
+                    Repair_total_iter += len(Repair_required_indices_res)
 
-                    print("imputation total: ", imputation_total_iter)
+                    print("Repair total: ", Repair_total_iter)
                     print("missing value initial: ", missing_value_initial_iter)
 
                     if i_loop == 0 or (i_loop + 1) % 3 == 0:
@@ -779,68 +779,68 @@ if __name__ == '__main__':
                         else:
                             print(f"Iter {i_loop+1}: No non-NaN data to evaluate.")
 
-                    if imputation_total_iter >= missing_value_initial_iter or len(imputation_required_indices_res) == 0:
-                        print("imputation total: ", imputation_total_iter)
+                    if Repair_total_iter >= missing_value_initial_iter or len(Repair_required_indices_res) == 0:
+                        print("Repair total: ", Repair_total_iter)
                         print("Stopping condition met.")
                         break
 
             elif itter_method_loop == "KNN": 
                 for i_loop in range(0,max_iter_loop): 
                     print(f"\n--- Iteration {i_loop+1}/{max_iter_loop} ---")
-                    minimal_imputation_res, imputation_required_indices_res, _ = findminimalImputation(
+                    minimal_Repair_res, Repair_required_indices_res, _ = findminimalRepair(
                         X_train_filled_iter, Y_train_filled_iter, seed=seed_iter_loop
                     )
-                    print("need to be imputed: ", len(imputation_required_indices_res))
-                    num_dropped_sanity = sanity_check(X_train_filled_iter, imputation_required_indices_res)
+                    print("need to be imputed: ", len(Repair_required_indices_res))
+                    num_dropped_sanity = sanity_check(X_train_filled_iter, Repair_required_indices_res)
                     print("number of example dropped: ", num_dropped_sanity)
 
-                    if not imputation_required_indices_res: print("Stopping: No indices to impute."); break
+                    if not Repair_required_indices_res: print("Stopping: No indices to impute."); break
 
                     if model_knn_main: 
-                        X_imputed_full_knn_iter, _ = knn_imputation(X_train_filled_iter.copy(), condition="Transform", imputer=model_knn_main)
-                        X_train_filled_iter[imputation_required_indices_res] = X_imputed_full_knn_iter[imputation_required_indices_res]
+                        X_imputed_full_knn_iter, _ = knn_Repair(X_train_filled_iter.copy(), condition="Transform", imputer=model_knn_main)
+                        X_train_filled_iter[Repair_required_indices_res] = X_imputed_full_knn_iter[Repair_required_indices_res]
                     else:
                         print("KNN model (model_knn_main) not available. Stopping KNN iterative method.")
                         break
 
                     current_number_missing_iter = np.isnan(X_train_filled_iter).any(axis=1).sum()
-                    imputation_total_iter += len(imputation_required_indices_res)
+                    Repair_total_iter += len(Repair_required_indices_res)
 
-                    print("imputation total: ", imputation_total_iter)
+                    print("Repair total: ", Repair_total_iter)
                     print("missing value initial: ", missing_value_initial_iter)
 
-                    if imputation_total_iter >= missing_value_initial_iter or len(imputation_required_indices_res) == 0 :
-                        print("imputation total: ", imputation_total_iter)
+                    if Repair_total_iter >= missing_value_initial_iter or len(Repair_required_indices_res) == 0 :
+                        print("Repair total: ", Repair_total_iter)
                         print("Stopping condition met.")
                         break
             
             elif itter_method_loop == "MICE": 
                 for i_loop in range(0, max_iter_loop): 
                     print(f"\n--- Iteration {i_loop+1}/{max_iter_loop} ---")
-                    minimal_imputation_res, imputation_required_indices_res, _ = findminimalImputation(
+                    minimal_Repair_res, Repair_required_indices_res, _ = findminimalRepair(
                         X_train_filled_iter, Y_train_filled_iter, seed=seed_iter_loop)
 
-                    print("need to be imputed: ", len(imputation_required_indices_res))
-                    num_dropped_sanity = sanity_check(X_train_filled_iter, imputation_required_indices_res)
+                    print("need to be imputed: ", len(Repair_required_indices_res))
+                    num_dropped_sanity = sanity_check(X_train_filled_iter, Repair_required_indices_res)
                     print("number of example dropped: ", num_dropped_sanity)
                     
-                    if not imputation_required_indices_res: print("Stopping: No indices to impute."); break
+                    if not Repair_required_indices_res: print("Stopping: No indices to impute."); break
 
                     if model_mice_main: 
                         X_imputed_full_mice_iter, _ = mice_impute(X_train_filled_iter.copy(), condition="Transform", imputer=model_mice_main)
-                        X_train_filled_iter[imputation_required_indices_res] = X_imputed_full_mice_iter[imputation_required_indices_res]
+                        X_train_filled_iter[Repair_required_indices_res] = X_imputed_full_mice_iter[Repair_required_indices_res]
                     else:
                         print("MICE model (model_mice_main) not available. Stopping MICE iterative method.")
                         break
 
                     current_number_missing_iter = np.isnan(X_train_filled_iter).any(axis=1).sum()
-                    imputation_total_iter += len(imputation_required_indices_res)
+                    Repair_total_iter += len(Repair_required_indices_res)
 
-                    print("imputation total: ", imputation_total_iter)
+                    print("Repair total: ", Repair_total_iter)
                     print("missing value initial: ", missing_value_initial_iter)
 
-                    if imputation_total_iter >= missing_value_initial_iter or len(imputation_required_indices_res) == 0:
-                        print("imputation total: ", imputation_total_iter)
+                    if Repair_total_iter >= missing_value_initial_iter or len(Repair_required_indices_res) == 0:
+                        print("Repair total: ", Repair_total_iter)
                         print("Stopping condition met.")
                         break
 
@@ -882,4 +882,4 @@ if __name__ == '__main__':
                 print(f"Total time itterative GT-imputed: {total_time_final_iter:.4f}")
                 print("\n\n")
             else:
-                print("Final Iterative Imputation: No non-NaN data to evaluate.\n\n")
+                print("Final Iterative Repair: No non-NaN data to evaluate.\n\n")
