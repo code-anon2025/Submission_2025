@@ -15,7 +15,7 @@ import time
 
 
 def omp_select_features(X, y, threshold, max_iter=100):
-    numNeedingImputation = 0
+    numNeedingRepair = 0
     X_impute = X.copy()
     X_impute.fillna(X_impute.mean(), inplace=True)
 
@@ -65,7 +65,7 @@ def omp_select_features(X, y, threshold, max_iter=100):
         j = remaining_features[np.argmax(cosine_similarities)]
         S.append(j)
         remaining_features.remove(j)
-        numNeedingImputation += 1
+        numNeedingRepair += 1
 
         if np.isnan(max_cosine_similarity):
             print("Max Cosine Similarity is NaN, stopping.")
@@ -77,7 +77,7 @@ def omp_select_features(X, y, threshold, max_iter=100):
 
         r = y - y_pred
 
-    return (S, numNeedingImputation)
+    return (S, numNeedingRepair)
 
 def evaluate_model(X_train, X_test, y_train, y_test, impute_strategy, must_impute=None):
     if impute_strategy == 'mean':
@@ -162,7 +162,7 @@ def evaluate_model(X_train, X_test, y_train, y_test, impute_strategy, must_imput
 # Load data
 print("Loading data...")
 
-data = pd.read_csv('./Minimal-Imputation/Linear Regression/datasets/CommunitiesAndCrime.csv')
+data = pd.read_csv('./Minimal-Repair/Linear Regression/datasets/CommunitiesAndCrime.csv')
 
 
 train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
@@ -196,12 +196,12 @@ print("\n")
 for threshold in thresholds:
     start = time.time()
     print("Threshold:", threshold)
-    must_impute_features, numNeedingImputation = omp_select_features(X, y, threshold)
+    must_impute_features, numNeedingRepair = omp_select_features(X, y, threshold)
 
     end= time.time()
     proces = end-start
     print(f"Time Finding Minimal: {proces:.4f}")
-    print(f"Must-Impute Missing Features: {numNeedingImputation}")
+    print(f"Must-Impute Missing Features: {numNeedingRepair}")
     print(f"Number of Must-Impute Features: {len(must_impute_features)}")
     mse_mean, time_mean = evaluate_model(X_train, X_test, y_train, y_test, 'mean', must_impute=must_impute_features)
     mse_knn, time_knn = evaluate_model(X_train, X_test, y_train, y_test, 'knn', must_impute=must_impute_features)
@@ -215,7 +215,7 @@ for threshold in thresholds:
     
     results.append({
         'Threshold': f"{threshold:.4f}",
-        '# Features Imputed': numNeedingImputation,
+        '# Features Imputed': numNeedingRepair,
         'MSE (MI)': f"{mse_mean:.4f}",
         'Time (MI)': f"{time_mean:.4f}",
         'MSE (KI)': f"{mse_knn:.4f}",
@@ -241,4 +241,4 @@ baseline_results = {
     'Time (MinI)': f"{time_min_baseline:.4f}"
 }
 baseline_results_df = pd.DataFrame([baseline_results])
-baseline_results_df.to_csv('./Minimal-Imputation/Linear Regression/results/cancerResultsBaseline.csv', index=False)
+baseline_results_df.to_csv('./Minimal-Repair/Linear Regression/results/cancerResultsBaseline.csv', index=False)
